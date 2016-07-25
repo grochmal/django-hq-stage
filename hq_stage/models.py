@@ -1,6 +1,7 @@
 from django.db import models
-from django.code.urlresolvers import reverse
+from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 
 import datetime
 from pytz import timezone
@@ -23,9 +24,10 @@ class Batch(models.Model):
     date_created = models.DateTimeField(
           _('date created')
         , blank=True
+        , editable=False
         , help_text=_('creation of the batch')
         )
-    processed = modles.BooleanField(
+    processed = models.BooleanField(
           _('processed')
         , db_index=True
         , default=False
@@ -37,6 +39,12 @@ class Batch(models.Model):
 
     def get_absolute_url(self):
         reverse('hq_stage:batch', kwargs={ 'batch_id' : self.id })
+
+    def save(self, *args, **kwargs):
+        if self.pk is None:  # this is an insert
+            tz = timezone(settings.TIME_ZONE)
+            self.date_created = tz.localize(datetime.datetime.now())
+        super(Batch, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _('batch')
@@ -76,6 +84,7 @@ class DataRow(models.Model):
     insert_date = models.DateTimeField(
           _('insert date')
         , blank=True
+        , editable=False
         , help_text=_('insertion in the stage database')
         )
     batch = models.ForeignKey(
@@ -100,78 +109,107 @@ class DataRow(models.Model):
         , default=False
         , help_text=_('if set the row is considered an ignored error')
         )
+    fields_in_error = models.TextField(
+          _('fields in error')
+        , blank=True
+        , null=True
+        , editable=False
+        , help_text=_('because of these field the row could not be loaded')
+        )
 
     def __str__(self):
         return '[' + str(self.insert_date) + '] ' + str(self.batch.id)
 
+    def save(self, *args, **kwargs):
+        if self.pk is None:  # this is an insert
+            tz = timezone(settings.TIME_ZONE)
+            self.insert_date = tz.localize(datetime.datetime.now())
+            if self.batch is None:
+                # create a new batch if needed
+                self.batch = Batch()
+        super(DataRow, self).save(*args, **kwargs)
+
     class Meta:
-        abstarct = True
+        abstract = True
 
 
 class Offer(DataRow):
     external_id = models.CharField(
           _('external id')
         , max_length=255
+        , blank=True
         , help_text=_('id provided in the input')
         )
     hotel_id = models.CharField(
           _('hotel id')
         , max_length=255
+        , blank=True
         , help_text=_('the hotel providing the offer')
         )
     currency_id = models.CharField(
           _('currency id')
         , max_length=255
+        , blank=True
         , help_text=_('currency the offer is in')
         )
     source_system_code = models.CharField(
           _('source system code')
         , max_length=255
+        , blank=True
         , help_text=_('code form the inventory system')
         )
     available_cnt = models.CharField(
           _('available count')
         , max_length=255
+        , blank=True
         , help_text=_('number of rooms available')
         )
     selling_price = models.CharField(
           _('selling price')
         , max_length=255
+        , blank=True
         , help_text=_('price of the offer')
         )
     checkin_date = models.CharField(
           _('check-in date')
         , max_length=255
+        , blank=True
         , help_text=_('date the guest must check in')
         )
     checkout_date = models.CharField(
           _('check-out date')
         , max_length=255
+        , blank=True
         , help_text=_('date the guest must check out')
         )
     valid_offer_flag = models.CharField(
           _('valid offer')
         , max_length=255
+        , blank=True
         , help_text=_('whether the offer is valid')
         )
     offer_valid_from = models.CharField(
           _('valid from')
         , max_length=255
+        , blank=True
         , help_text=_('when the offer becomes valid')
         )
     offer_valid_to = models.CharField(
           _('valid to')
         , max_length=255
+        , blank=True
         , help_text=_('when the offer becomes invalid')
         )
     breakfast_included_flag = models.CharField(
           _('breakfast included')
         , max_length=255
+        , blank=True
         , help_text=_('if price includes breakfast')
         )
     external_insert_datetime = models.CharField(
           _('external insert date')
         , max_length=255
+        , blank=True
         , help_text=_('insert date provided in input')
         )
 
@@ -188,16 +226,19 @@ class Currency(DataRow):
     external_id = models.CharField(
           _('external id')
         , max_length=255
+        , blank=True
         , help_text=_('id provided in the input')
         )
     currency_code = models.CharField(
           _('currency code')
         , max_length=255
+        , blank=True
         , help_text=_('iso 4217 currency code')
         )
     currency_name = models.CharField(
           _('currency name')
         , max_length=255
+        , blank=True
         , help_text=_('currency name')
         )
 
@@ -214,26 +255,31 @@ class ExchangeRate(DataRow):
     external_id = models.CharField(
           _('external id')
         , max_length=255
+        , blank=True
         , help_text=_('id provided in the input')
         )
     primary_currency_id = models.CharField(
           _('primary currency id')
         , max_length=255
+        , blank=True
         , help_text=_('original currency')
         )
     secondary_currency_id = models.CharField(
           _('secondary_currency id')
         , max_length=255
+        , blank=True
         , help_text=_('converted currency')
         )
     date_valid = models.CharField(
           _('date valid')
         , max_length=255
+        , blank=True
         , help_text=_('date of the forex rate')
         )
     currency_rate = models.CharField(
           _('currency rate')
         , max_length=255
+        , blank=True
         , help_text=_('conversion rate')
         )
 
