@@ -1,21 +1,41 @@
 from django.conf.urls import url
 
+from . import views
+
+
 app_name = 'hq_stage'
 urlpatterns = [
-      url( r'batch/(P<batch_id>\d+)/'
-         , #TODO
+      url( r'^batch/(?P<pk>\d+)/'
+         , views.BatchView.as_view()
          , name='batch'
          )
-    , url( r'offer/(P<offer_id>\d+)/'
-         , #TODO
-         , name='offer'
+    , url( r'^batch/$'
+         , views.BatchListView.as_view()
+         , name='batch_list'
          )
-    , url( r'currecny/(P<currency_id>\d+)/'
-         , #TODO
+    , url( r'^currency/(?P<pk>\d+)/'
+         , views.CurrencyUpdateView.as_view()
          , name='currency'
          )
-    , url( r'exchnage/(P<exhcnage_id>\d+)/'
-         , #TODO
+    , url( r'^currency/$'
+         , views.CurrencyListView.as_view()
+         , name='currency_list'
+         )
+    , url( r'^exchange/(?P<pk>\d+)/'
+         , views.ExchangeUpdateView.as_view()
          , name='exchange'
          )
+    , url( r'^exchange/$'
+         , views.ExchangeListView.as_view()
+         , name='exchange_list'
+         )
+    , url( r'^offer/(?P<pk>\d+)/'
+         , views.OfferUpdateView.as_view()
+         , name='offer'
+         )
+    , url( r'^offer/$'
+         , views.OfferListView.as_view()
+         , name='offer_list'
+         )
 ]
+

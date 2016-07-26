@@ -1,0 +1,18 @@
+{% extends "hq_stage/hq_stage.html" %}
+
+{% block title %}
+batch {{ batch.id }} - {{ batch.date_created|date:'l, F jS o - g:iA' }}
+{% endblock %}
+
+{% block page_body %}
+<div>Batch ID: {{ batch.id }}</div>
+<div>Date Created {{ batch.date_created|date:'l, F jS o - g:iA' }}</div>
+<div>Processed:
+  {% if batch.processed %}
+    Yes
+  {% else %}
+    No
+  {% endif %}
+</div>
+{% endblock %}
+

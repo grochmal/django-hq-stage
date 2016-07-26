@@ -35,10 +35,10 @@ class Batch(models.Model):
         )
 
     def __str__(self):
-        return '[' + str(self.date_created) + '] ' + str(self.id)
+        return 'Batch [' + str(self.date_created) + '] ' + str(self.id)
 
     def get_absolute_url(self):
-        reverse('hq_stage:batch', kwargs={ 'batch_id' : self.id })
+        return reverse('hq_stage:batch', kwargs={ 'pk' : self.id })
 
     def save(self, *args, **kwargs):
         if self.pk is None:  # this is an insert
@@ -213,8 +213,14 @@ class Offer(DataRow):
         , help_text=_('insert date provided in input')
         )
 
+    def __str__(self):
+        certain = super(Offer, self).__str__()
+        hid = self.hotel_id
+        ssc = self.source_system_code
+        return certain + ' [' + hid + '] [' + ssc + ']'
+
     def get_absolute_url(self):
-        reverse('hq_stage:offer', kwargs={ 'offer_id' : self.id })
+        return reverse('hq_stage:offer', kwargs={ 'pk' : self.id })
 
     class Meta:
         index_together = [ ( 'in_error' , 'ignore' ) ]
@@ -242,8 +248,12 @@ class Currency(DataRow):
         , help_text=_('currency name')
         )
 
+    def __str__(self):
+        certain = super(Currency, self).__str__()
+        return certain + ' ' + self.currency_name
+
     def get_absolute_url(self):
-        reverse('hq_stage:currency', kwargs={ 'currency_id' : self.id })
+        return reverse('hq_stage:currency', kwargs={ 'pk' : self.id })
 
     class Meta:
         index_together = [ ( 'in_error' , 'ignore' ) ]
@@ -283,8 +293,14 @@ class ExchangeRate(DataRow):
         , help_text=_('conversion rate')
         )
 
+    def __str__(self):
+        certain = super(ExchangeRate, self).__str__()
+        dt = self.date_valid
+        cr = self.currency_rate
+        return certain + ' [' + dt + '] [' + cv + ']'
+
     def get_absolute_url(self):
-        reverse('hq_stage:exchange', kwargs={ 'exchange_id' : self.id })
+        return reverse('hq_stage:exchange', kwargs={ 'pk' : self.id })
 
     class Meta:
         index_together = [ ( 'in_error' , 'ignore' ) ]

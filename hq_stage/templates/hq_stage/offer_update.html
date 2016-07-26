@@ -1,0 +1,13 @@
+{% extends "hq_stage/hq_stage.html" %}
+
+{% block title %}
+update {{ offer.source_system_code }} - {{ offer.hotel_id }}
+{% endblock %}
+
+{% block page_body %}
+<form action="" method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <p>Submit button not provided, sorry.</p>
+</form>
+{% endblock %}
+

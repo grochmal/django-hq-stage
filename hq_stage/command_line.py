@@ -54,7 +54,7 @@ def read_unix_csv(csv_file):
         for row in reader:
             yield row
 
-def load_currency(csv_file, models):
+def load_currency(csv_file, models, settings):
     '''
     Bulk insert of the Currency model.
 
@@ -69,8 +69,9 @@ def load_currency(csv_file, models):
     ignore.append('id')
     infields = diff_list(fields, ignore)
 
-    #batch = models.Batch()
-    #print('Using new batch [%i]' % batch.id)
+    batch = models.Batch()
+    batch.save()
+    print('Using new batch [%i]' % batch.id)
     commit_num = 3
     commit_list = []
     iter = read_unix_csv(csv_file)
@@ -82,18 +83,23 @@ def load_currency(csv_file, models):
     for row in iter:
         field_dict = zip_default(infields, row)
         #print(field_dict)
-        #Currency(batch=batch, insert_date=insert_date, **field_dict)
-        commit_list.append(field_dict)
+        cur = models.Currency(
+              batch=batch
+            , insert_date=insert_date
+            , **field_dict
+            )
+        commit_list.append(cur)
         if len(commit_list) % commit_num == 0:
-            #Currency.objects.bulk_create(commit_list)
-            print('commit', commit_list)
+            models.Currency.objects.bulk_create(commit_list)
+            print('commit', commit_num, 'currencies')
             commit_list = []
-    #Currency.objects.bulk_create(commit_list)
+    models.Currency.objects.bulk_create(commit_list)
+    print('final commit, and we are done')
 
-def load_exchange_rate(csv_file, models):
+def load_exchange_rate(csv_file, models, settings):
     pass
 
-def load_offer(csv_file, models):
+def load_offer(csv_file, models, settings):
     pass
 
 def load_table():
@@ -145,10 +151,11 @@ def load_table():
         sys.exit(1)
     if not table in tables:
         print(usage)
-        print('No such table to load.  Available tables')
-        print(', '.join(sort(keys(tables))))
+        print('No such table to load.  Available tables:')
+        print(', '.join(sorted(tables.keys())))
+        sys.exit(1)
 
-    tables[table](infile, models)
+    tables[table](infile, models, settings)
 
 def print_errors():
     settings_path()

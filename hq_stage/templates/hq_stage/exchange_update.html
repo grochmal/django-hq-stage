@@ -1,0 +1,13 @@
+{% extends "hq_stage/hq_stage.html" %}
+
+{% block title %}
+update {{ exchange.date_valid }} - {{ exchange.currency_rate }}
+{% endblock %}
+
+{% block page_body %}
+<form action="" method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <p>Submit button not provided, sorry.</p>
+</form>
+{% endblock %}
+
