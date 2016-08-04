@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# distutils have not entry_points, fail if setuptools are not available
+# distutils have no entry_points, fail if setuptools are not available
 from setuptools import setup
 import os
 import hq_stage

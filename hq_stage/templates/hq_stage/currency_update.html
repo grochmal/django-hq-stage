@@ -1,10 +1,12 @@
-{% extends "hq_stage/hq_stage.html" %}
+{% extends "hq_main/hq.html" %}
 
 {% block title %}
 update {{ currency.currency_name }}
 {% endblock %}
 
 {% block page_body %}
+{{ block.super }}
+
 <p>Currency ID: {{ currency.id }}</p>
 <p>Insert Date: {{ currency.insert_date }}</p>
 <p>Fields in Error:</p>

@@ -1,10 +1,18 @@
-{% extends "hq_stage/hq_stage.html" %}
+{% extends "hq_main/hq.html" %}
 
 {% block title %}
 update {{ exchange.date_valid }} - {{ exchange.currency_rate }}
 {% endblock %}
 
 {% block page_body %}
+{{ block.super }}
+
+<p>Exchange rate ID: {{ exchange.id }}</p>
+<p>Insert Date: {{ exchange.insert_date }}</p>
+<p>Fields in Error:</p>
+<div>
+  {{ exchange.fields_in_error }}
+</div>
 <form action="" method="post">{% csrf_token %}
   {{ form.as_p }}
   <p>Submit button not provided, sorry.</p>

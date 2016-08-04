@@ -2,8 +2,32 @@ README for django-hq-stage
 
 ## Introduction
 
-Django app for construcitng and maintianing the staging area database in the
+Django app for constructing and maintaining the staging area database in the
 Hotel Quickly example Warehouse.
+
+The app has two command line tools:
+
+*   `hqs-load-table`
+
+*   `hqs-print-errors`
+
+And a data load `API` residing at:
+
+    <url root>/api/
+
+## Loading data
+
+It is preferable to load a self-consistent piece of data into a single batch,
+you can specify the batch number to the load script with `-b`.  The script
+prints the batch number that it used, which may be different from the one
+provided with `-b` if that batch does not exists or has been processed already.
+For example:
+
+    $ hqs-load-data -f hq-currency.csv -t currency
+    ...
+    Batch: [ 1 ]
+    $ hqs-load-data -f hq-forex.csv -t exchange-rate -b 3
+    $ hqs-load-data -f hq-offer.csv -t offer -b 3
 
 ## Copying
 

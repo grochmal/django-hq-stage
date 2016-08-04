@@ -2,26 +2,7 @@
 
 import os, sys, getopt, csv, datetime
 from pytz import timezone
-
-def zip_default(keys, values, default=''):
-    '''
-    Zips two lists into a dictionary.  But, contrary to plain `zip`, if the
-    list containing the keys is longer then the list containing the values add
-    the `default` value as the value for the remaining keys.
-    '''
-    while len(keys) > len(values):
-        values.append(default)
-    return dict(zip(keys, values))
-
-def diff_list(left, right):
-    '''
-    Compute set difference of lists, but keeps the order of fields in the left
-    operand (a real set difference would ignore order).
-    '''
-    for i in right:
-        if i in left:
-            left.remove(i)
-    return left
+from . import util
 
 def settings_path():
     '''
@@ -54,25 +35,17 @@ def read_unix_csv(csv_file):
         for row in reader:
             yield row
 
-def load_currency(csv_file, models, settings):
+def load_currency(csv_file, batch, models, settings):
     '''
     Bulk insert of the Currency model.
 
     Since we may have a lot of records being inserted firing an insert for each
     would not be quick enough in most wareouses.  Instead we use a bulk insert
     every a certain number of records.
-
-    TODO: The number of records commited in bulk should be configurable.
     '''
-    fields = list(map(lambda x: x.name, models.Currency._meta.get_fields()))
-    ignore = list(map(lambda x: x.name, models.DataRow._meta.get_fields()))
-    ignore.append('id')
-    infields = diff_list(fields, ignore)
-
-    batch = models.Batch()
-    batch.save()
-    print('Using new batch [%i]' % batch.id)
-    commit_num = 3
+    infields = util.remove_abstract_fields( models.Currency
+                                          , models.DataRow, ['id'] )
+    commit_num = settings.HQ_DW_COMMIT_SIZE
     commit_list = []
     iter = read_unix_csv(csv_file)
     next(iter, None)  # ignore header
@@ -81,8 +54,7 @@ def load_currency(csv_file, models, settings):
     tz = timezone(settings.TIME_ZONE)
     insert_date = tz.localize(datetime.datetime.now())
     for row in iter:
-        field_dict = zip_default(infields, row)
-        #print(field_dict)
+        field_dict = util.zip_default(infields, row)
         cur = models.Currency(
               batch=batch
             , insert_date=insert_date
@@ -96,11 +68,73 @@ def load_currency(csv_file, models, settings):
     models.Currency.objects.bulk_create(commit_list)
     print('final commit, and we are done')
 
-def load_exchange_rate(csv_file, models, settings):
-    pass
+def load_exchange_rate(csv_file, batch, models, settings):
+    '''
+    Bulk insert of the ExchangeRate model.
 
-def load_offer(csv_file, models, settings):
-    pass
+    This has a lot of duplicated code from load_currency, someday it will need
+    to be refactored.
+    '''
+    infields = util.remove_abstract_fields( models.ExchangeRate
+                                          , models.DataRow, ['id'] )
+    commit_num = settings.HQ_DW_COMMIT_SIZE
+    commit_list = []
+    iter = read_unix_csv(csv_file)
+    next(iter, None)  # ignore header
+    # bulk_create does not call save(), we need to add the date manually
+    tz = timezone(settings.TIME_ZONE)
+    insert_date = tz.localize(datetime.datetime.now())
+    for row in iter:
+        field_dict = util.zip_default(infields, row)
+        cur = models.ExchangeRate(
+              batch=batch
+            , insert_date=insert_date
+            , **field_dict
+            )
+        commit_list.append(cur)
+        if len(commit_list) % commit_num == 0:
+            models.ExchangeRate.objects.bulk_create(commit_list)
+            print('commit', commit_num, 'exchange rates')
+            commit_list = []
+    models.ExchangeRate.objects.bulk_create(commit_list)
+    print('final commit, and we are done')
+
+def load_offer(csv_file, batch, models, settings):
+    '''
+    Bulk insert of the Offer model.
+
+    Again, duplicated code.  The main difficulty in making a generic function
+    is the fact that the files are not consistent:
+
+    *   currency has a header and a dummy row
+    *   exchange rate has a header only
+    *   and offer has a dummy row only
+
+    I could edit the files, but that would be cheating.
+    '''
+    infields = util.remove_abstract_fields( models.Offer
+                                          , models.DataRow, ['id'] )
+    commit_num = settings.HQ_DW_COMMIT_SIZE
+    commit_list = []
+    iter = read_unix_csv(csv_file)
+    next(iter, None)  # ignore header
+    # bulk_create does not call save(), we need to add the date manually
+    tz = timezone(settings.TIME_ZONE)
+    insert_date = tz.localize(datetime.datetime.now())
+    for row in iter:
+        field_dict = util.zip_default(infields, row)
+        cur = models.Offer(
+              batch=batch
+            , insert_date=insert_date
+            , **field_dict
+            )
+        commit_list.append(cur)
+        if len(commit_list) % commit_num == 0:
+            models.Offer.objects.bulk_create(commit_list)
+            print('commit', commit_num, 'offers')
+            commit_list = []
+    models.Offer.objects.bulk_create(commit_list)
+    print('final commit, and we are done')
 
 def load_table():
     '''
@@ -123,19 +157,22 @@ def load_table():
         , 'offer' : load_offer
         }
 
-    usage = 'hqs-load-table [-h] -f <csv file> -t <table>'
+    usage = 'hqs-load-table [-h] [-b <batch>] -f <csv file> -t <table>'
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hf:t:')
+        opts, args = getopt.getopt(sys.argv[1:], 'hb:f:t:')
     except getopt.GetopetError as e:
         print(e)
         print(usage)
         sys.exit(2)
+    batchno = None
     infile = None
     table = None
     for o, a in opts:
         if '-h' == o:
             print(usage)
             sys.exit(0)
+        elif '-b' == o:
+            batchno = a
         elif '-f' == o:
             infile = a
         elif '-t' == o:
@@ -155,14 +192,63 @@ def load_table():
         print(', '.join(sorted(tables.keys())))
         sys.exit(1)
 
-    tables[table](infile, models, settings)
+    batch = util.get_new_model(models.Batch, batchno)
+    if not batch:
+        # we got rubbish, build a new one
+        batch = models.Batch()
+    batch.save()
+    print('Using batch [%i]' % batch.id)
+    tables[table](infile, batch, models, settings)
+    print('Batch: [ %i ]' % batch.id)
 
 def print_errors():
+    '''
+    Print the current rows in error from the command line.
+
+    TODO:
+
+    *   This should receive a batch argument and then print errors from all
+        tables in that batch.
+    '''
     settings_path()
     import django
     django.setup()
     from django.conf import settings
     from hq_stage import models
 
-    print(settings.DATABASES)
+    tables = {
+          'currency' : models.Currency.objects
+        , 'exchange-rate' : models.ExchangeRate.objects
+        , 'offer' : models.Offer.objects
+        }
+
+    usage = 'hqs-print-errors [-h] -t <table>'
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'ht:')
+    except getopt.GetopetError as e:
+        print(e)
+        print(usage)
+        sys.exit(2)
+    table = None
+    for o, a in opts:
+        if '-h' == o:
+            print(usage)
+            sys.exit(0)
+        elif '-t' == o:
+            table = a
+        else:
+            assert False, 'unhandled option [%s]' % o
+    if not table:
+        print(usage)
+        sys.exit(1)
+    if not table in tables:
+        print(usage)
+        print('No such table.  Available tables:')
+        print(', '.join(sorted(tables.keys())))
+        sys.exit(1)
+
+    q = tables[table].filter(in_error=True).exclude(ignore=True)
+    domain = (settings.ALLOWED_HOSTS[0:1] or 'localhost')
+    for obj in q:
+        print('http://%s%s' % (domain, obj.get_absolute_url()))
 

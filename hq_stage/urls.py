@@ -37,5 +37,13 @@ urlpatterns = [
          , views.OfferListView.as_view()
          , name='offer_list'
          )
+    , url( r'^upload-api/$'
+         , views.UploadView.as_view()
+         , name='api'
+         )
+    , url( r''
+         , views.DocView.as_view()
+         , name='doc'
+         )
 ]
 

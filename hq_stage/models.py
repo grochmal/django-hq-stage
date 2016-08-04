@@ -90,7 +90,7 @@ class DataRow(models.Model):
     batch = models.ForeignKey(
           Batch
         , verbose_name=_('batch')
-        , related_name='%(app_label)s_%(class)s_set'
+        , related_name='%(class)s_set'
         , help_text=_('the batch this offer is assigned to')
         )
     processed = models.BooleanField(
@@ -138,79 +138,106 @@ class Offer(DataRow):
           _('external id')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('id provided in the input')
         )
     hotel_id = models.CharField(
           _('hotel id')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('the hotel providing the offer')
         )
     currency_id = models.CharField(
           _('currency id')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('currency the offer is in')
         )
     source_system_code = models.CharField(
           _('source system code')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('code form the inventory system')
         )
     available_cnt = models.CharField(
           _('available count')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('number of rooms available')
         )
     selling_price = models.CharField(
           _('selling price')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('price of the offer')
         )
     checkin_date = models.CharField(
           _('check-in date')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('date the guest must check in')
         )
     checkout_date = models.CharField(
           _('check-out date')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('date the guest must check out')
         )
     valid_offer_flag = models.CharField(
           _('valid offer')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('whether the offer is valid')
         )
     offer_valid_from = models.CharField(
           _('valid from')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('when the offer becomes valid')
         )
     offer_valid_to = models.CharField(
           _('valid to')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('when the offer becomes invalid')
         )
     breakfast_included_flag = models.CharField(
           _('breakfast included')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('if price includes breakfast')
         )
     external_insert_datetime = models.CharField(
           _('external insert date')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('insert date provided in input')
+        )
+    # This is a defence against bad data input.  If the CSV row is too long
+    # this field will be populated.  Without this field we would simply throw
+    # away extraneous data at the end of a row and then scratch our heads when
+    # trying to figure out why the data in the other fields is wrong.  If the
+    # row is shifted in any way we will notice by the content of this field.
+    # This is useful in fact tables (i.e. this table) but less useful in
+    # dimension tables.
+    dummy_field = models.CharField(
+          _('dummy field')
+        , max_length=255
+        , blank=True
+        , default=' '
+        , help_text=_('dummy field that may sometimes be present in the input')
         )
 
     def __str__(self):
@@ -233,18 +260,21 @@ class Currency(DataRow):
           _('external id')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('id provided in the input')
         )
     currency_code = models.CharField(
           _('currency code')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('iso 4217 currency code')
         )
     currency_name = models.CharField(
           _('currency name')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('currency name')
         )
 
@@ -266,30 +296,35 @@ class ExchangeRate(DataRow):
           _('external id')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('id provided in the input')
         )
     primary_currency_id = models.CharField(
           _('primary currency id')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('original currency')
         )
     secondary_currency_id = models.CharField(
           _('secondary_currency id')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('converted currency')
         )
     date_valid = models.CharField(
           _('date valid')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('date of the forex rate')
         )
     currency_rate = models.CharField(
           _('currency rate')
         , max_length=255
         , blank=True
+        , default=' '
         , help_text=_('conversion rate')
         )
 
@@ -297,7 +332,7 @@ class ExchangeRate(DataRow):
         certain = super(ExchangeRate, self).__str__()
         dt = self.date_valid
         cr = self.currency_rate
-        return certain + ' [' + dt + '] [' + cv + ']'
+        return certain + ' [' + dt + '] [' + cr + ']'
 
     def get_absolute_url(self):
         return reverse('hq_stage:exchange', kwargs={ 'pk' : self.id })

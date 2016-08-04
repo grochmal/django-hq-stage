@@ -1,10 +1,18 @@
-{% extends "hq_stage/hq_stage.html" %}
+{% extends "hq_main/hq.html" %}
 
 {% block title %}
 update {{ offer.source_system_code }} - {{ offer.hotel_id }}
 {% endblock %}
 
 {% block page_body %}
+{{ block.super }}
+
+<p>Offer ID: {{ offer.id }}</p>
+<p>Insert Date: {{ offer.insert_date }}</p>
+<p>Fields in Error:</p>
+<div>
+  {{ offer.fields_in_error }}
+</div>
 <form action="" method="post">{% csrf_token %}
   {{ form.as_p }}
   <p>Submit button not provided, sorry.</p>

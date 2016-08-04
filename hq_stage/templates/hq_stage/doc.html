@@ -1,0 +1,51 @@
+{% extends "hq_main/hq.html" %}
+
+{% block title %}
+HQ Warehouse Staging Area
+{% endblock %}
+
+{% block page_body %}
+{{ block.super }}
+
+<h1>HQ Warehouse Staging Area</h1>
+
+<h3>Available commands</h3>
+
+<pre>
+hqs-load-table [-h] [-b &lt;batch&gt;] -f &lt;csv_file&gt; -t &lt;table&gt;
+</pre>
+
+<pre>
+hqs-print-errors [-h] -t &lt;table&gt;
+</pre>
+
+<div>Available Tables</div>
+
+<ul>
+  <li><code>currecny</code></li>
+  <li><code>exchange-rate</code></li>
+  <li><code>offer</code></li>
+</ul>
+
+<h3>API</h3>
+
+<p>
+  <code>POST</code> into </code>{% url 'hq_stage:api' %}</code>
+</p>
+
+<p>Example</p>
+
+<pre>
+POST {% url 'hq_stage:api' %} HTTP/1.1
+
+{ 'batch' : 3  // batch is optional
+, 'object_type' : 'currency'
+, 'object_data' :
+    { 'external_id' : '3'
+    , 'currency_code' : 'GBP'
+    , 'currency_name' : 'British Pound'
+    }
+}
+</pre>
+{% endblock %}
+
