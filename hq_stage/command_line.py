@@ -160,7 +160,7 @@ def load_table():
     usage = 'hqs-load-table [-h] [-b <batch>] -f <csv file> -t <table>'
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'hb:f:t:')
-    except getopt.GetopetError as e:
+    except getopt.GetoptError as e:
         print(e)
         print(usage)
         sys.exit(2)
@@ -225,7 +225,7 @@ def print_errors():
     usage = 'hqs-print-errors [-h] -t <table>'
     try:
         opts, args = getopt.getopt(sys.argv[1:], 'ht:')
-    except getopt.GetopetError as e:
+    except getopt.GetoptError as e:
         print(e)
         print(usage)
         sys.exit(2)
@@ -248,7 +248,10 @@ def print_errors():
         sys.exit(1)
 
     q = tables[table].filter(in_error=True).exclude(ignore=True)
+    # This is horrible code, but there is no time to make proper views
     domain = (settings.ALLOWED_HOSTS[0:1] or 'localhost')
+    if settings.DEBUG:
+        domain += ':8000'
     for obj in q:
         print('http://%s%s' % (domain, obj.get_absolute_url()))
 
