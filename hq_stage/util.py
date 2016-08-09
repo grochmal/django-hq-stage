@@ -35,9 +35,9 @@ def remove_abstract_fields(cls, abs, extra=None):
 
 def get_model(model, pk=None):
     '''
-    Try to get a workable instance.  If we get a primary key number try that,
-    if we get a string try to convert it into a number, if we get nothing
-    create a new instance.  If we get total garbage just error.
+    Try to get a workable instance of a simple model.  If we get a primary key
+    number try that, if we get a string try to convert it into a number, if we
+    get nothing create a new instance.  If we get total garbage just error.
     '''
     if str == type(pk):
         try:
@@ -58,14 +58,14 @@ def get_model(model, pk=None):
 
 def get_new_model(model, pk=None):
     '''
-    Wraper around `get_model` for models with a `processed` field.  This works
-    because all models in this package have the `processed` field.  This is
-    most often used to get a batch, either by number or a new one if the batch
-    number cannot be used.
+    Wrapper around `get_model` for models with a `processed` field.  This works
+    because all models in this package (hq_stage) have the `processed` field.
+    This is most often used to get a batch, either by number or a batch one if
+    the batch number cannot be used.
     '''
     inst = get_model(model, pk)
     if hasattr(inst, 'processed') and inst.processed:
-        # and make a new one if the provided one has already been used
+        # also make a new one if the provided one has already been used
         inst = model()
     return inst
 

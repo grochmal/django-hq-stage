@@ -13,10 +13,21 @@ HQ Warehouse Staging Area
 
 <pre>
 hqs-load-table [-h] [-b &lt;batch&gt;] -f &lt;csv_file&gt; -t &lt;table&gt;
+
+  -h  Print usage.
+  -b  Batch number to use, if such a batch does not exist yet or has
+      already been processed this argument will be ignored.
+  -t  The table to load data into, either `currency`, `exchange-rate` or
+      `offer`.
+  -f  CSV file with relevant data for the table specified with -t.
 </pre>
 
 <pre>
 hqs-print-errors [-h] -t &lt;table&gt;
+
+  -h  Print usage.
+  -t  Check the table for rows that are in error (and the error has not
+      been set to ignored), either `currency`, `exchange-rate` or `offer`.
 </pre>
 
 <div>Available Tables</div>
@@ -30,7 +41,7 @@ hqs-print-errors [-h] -t &lt;table&gt;
 <h3>API</h3>
 
 <p>
-  <code>POST</code> into </code>{% url 'hq_stage:api' %}</code>
+  <code>POST</code> into <code>{% url 'hq_stage:api' %}</code>
 </p>
 
 <p>Example</p>

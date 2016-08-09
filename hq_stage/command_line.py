@@ -40,7 +40,7 @@ def load_currency(csv_file, batch, models, settings):
     Bulk insert of the Currency model.
 
     Since we may have a lot of records being inserted firing an insert for each
-    would not be quick enough in most wareouses.  Instead we use a bulk insert
+    would not be quick enough in most warehouses.  Instead we use a bulk insert
     every a certain number of records.
     '''
     infields = util.remove_abstract_fields( models.Currency
@@ -70,7 +70,7 @@ def load_currency(csv_file, batch, models, settings):
 
 def load_exchange_rate(csv_file, batch, models, settings):
     '''
-    Bulk insert of the ExchangeRate model.
+    Bulk insert of the Exchange Rate model.
 
     This has a lot of duplicated code from load_currency, someday it will need
     to be refactored.
